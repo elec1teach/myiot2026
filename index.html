@@ -1,106 +1,305 @@
+```html
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Home Control (Firebase Ready)</title>
-    <style>
-        /* โค้ด CSS ตกแต่งความสวยงาม (เหมือนเดิมทุกประการ) */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        .device-row {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 0; border-bottom: 1px solid #eee;
-        }
-        .device-row:last-child { border-bottom: none; }
-        .device-name { font-size: 18px; color: #555; font-weight: bold; }
-        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: #4CAF50; }
-        input:checked + .slider:before { transform: translateX(26px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<title>Smart Home Control - Futuristic UI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Prompt',sans-serif;
+    background:
+        radial-gradient(circle at top left,#0f172a,#020617 70%);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    overflow:hidden;
+    color:white;
+}
+
+/* เอฟเฟกต์พื้นหลัง */
+body::before{
+    content:"";
+    position:absolute;
+    width:500px;
+    height:500px;
+    background:rgba(0,255,255,0.08);
+    filter:blur(100px);
+    top:-150px;
+    left:-100px;
+}
+
+body::after{
+    content:"";
+    position:absolute;
+    width:400px;
+    height:400px;
+    background:rgba(0,140,255,0.08);
+    filter:blur(100px);
+    bottom:-120px;
+    right:-80px;
+}
+
+/* กล่องหลัก */
+.container{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:430px;
+
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.15);
+
+    backdrop-filter:blur(18px);
+
+    border-radius:25px;
+    padding:30px;
+
+    box-shadow:
+        0 0 25px rgba(0,255,255,0.15),
+        0 0 60px rgba(0,140,255,0.08);
+}
+
+/* หัวข้อ */
+.title{
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.title h1{
+    font-family:'Orbitron',sans-serif;
+    font-size:28px;
+    color:#00ffff;
+    letter-spacing:2px;
+
+    text-shadow:
+        0 0 10px #00ffff,
+        0 0 20px #00ffff;
+}
+
+.title p{
+    margin-top:8px;
+    color:#cbd5e1;
+    font-size:14px;
+}
+
+/* รายการอุปกรณ์ */
+.device-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    margin-bottom:18px;
+
+    padding:18px 20px;
+
+    border-radius:18px;
+
+    background:rgba(255,255,255,0.05);
+
+    border:1px solid rgba(255,255,255,0.08);
+
+    transition:0.3s;
+}
+
+.device-row:hover{
+    transform:translateY(-2px);
+    box-shadow:0 0 20px rgba(0,255,255,0.15);
+}
+
+.device-name{
+    font-size:17px;
+    font-weight:500;
+}
+
+/* Switch */
+.switch{
+    position:relative;
+    display:inline-block;
+    width:64px;
+    height:34px;
+}
+
+.switch input{
+    opacity:0;
+    width:0;
+    height:0;
+}
+
+.slider{
+    position:absolute;
+    cursor:pointer;
+    inset:0;
+
+    background:#334155;
+    border-radius:34px;
+
+    transition:0.4s;
+}
+
+.slider:before{
+    position:absolute;
+    content:"";
+
+    height:26px;
+    width:26px;
+
+    left:4px;
+    bottom:4px;
+
+    background:white;
+
+    border-radius:50%;
+
+    transition:0.4s;
+}
+
+/* เปิด */
+input:checked + .slider{
+    background:#00ffff;
+
+    box-shadow:
+        0 0 10px #00ffff,
+        0 0 20px #00ffff;
+}
+
+input:checked + .slider:before{
+    transform:translateX(30px);
+}
+
+/* ผู้พัฒนา */
+.footer{
+    margin-top:30px;
+    padding-top:18px;
+
+    border-top:1px solid rgba(255,255,255,0.1);
+
+    text-align:center;
+
+    color:#94a3b8;
+    font-size:13px;
+    line-height:1.7;
+}
+
+.footer span{
+    color:#00ffff;
+    font-weight:600;
+}
+
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 </head>
+
 <body>
 
-    <div class="container">
-        <h2>แผงควบคุม ESP8266</h2>
-        <div class="device-row">
-            <span class="device-name">💡 ช่องที่ 1 (D1)</span>
-            <label class="switch"><input type="checkbox" id="device1" onchange="toggleDevice(1)"><span class="slider"></span></label>
-        </div>
-        <div class="device-row">
-            <span class="device-name">🔌 ช่องที่ 2 (D2)</span>
-            <label class="switch"><input type="checkbox" id="device2" onchange="toggleDevice(2)"><span class="slider"></span></label>
-        </div>
-        <div class="device-row">
-            <span class="device-name">📺 ช่องที่ 3 (D5)</span>
-            <label class="switch"><input type="checkbox" id="device3" onchange="toggleDevice(3)"><span class="slider"></span></label>
-        </div>
-        <div class="device-row">
-            <span class="device-name">❄️ ช่องที่ 4 (D6)</span>
-            <label class="switch"><input type="checkbox" id="device4" onchange="toggleDevice(4)"><span class="slider"></span></label>
-        </div>
+<div class="container">
+
+    <div class="title">
+        <h1>SMART HOME</h1>
+        <p>ESP8266 IoT Control Panel</p>
     </div>
 
-    <script>
-        // 2. นำค่า Configuration จากโปรเจ็กต์ Firebase ของคุณมาใส่ตรงนี้
-        // (เดี๋ยวเราจะไปเอาค่าเหล่านี้มาจากเว็บ Firebase กันในขั้นตอนต่อไป)
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "YOUR_PROJECT_ID"
-        };
+    <div class="device-row">
+        <span class="device-name">💡 ช่องที่ 1 (D1)</span>
+        <label class="switch">
+            <input type="checkbox" id="device1" onchange="toggleDevice(1)">
+            <span class="slider"></span>
+        </label>
+    </div>
 
-        // 3. เริ่มต้นการเชื่อมต่อ Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+    <div class="device-row">
+        <span class="device-name">🔌 ช่องที่ 2 (D2)</span>
+        <label class="switch">
+            <input type="checkbox" id="device2" onchange="toggleDevice(2)">
+            <span class="slider"></span>
+        </label>
+    </div>
 
-        // 4. ฟังก์ชันส่งข้อมูลเมื่อมีการกดปุ่ม
-        function toggleDevice(channel) {
-            let isChecked = document.getElementById("device" + channel).checked;
-            let status = isChecked ? "ON" : "OFF";
-            
-            console.log("กำลังส่งคำสั่งช่องที่ " + channel + " -> " + status);
+    <div class="device-row">
+        <span class="device-name">📺 ช่องที่ 3 (D5)</span>
+        <label class="switch">
+            <input type="checkbox" id="device3" onchange="toggleDevice(3)">
+            <span class="slider"></span>
+        </label>
+    </div>
 
-            // ส่งค่าไปยัง Firebase Realtime Database
-            // จะสร้างโฟลเดอร์ชื่อ 'SmartHome' และมีข้อมูล 'relay_1', 'relay_2', ฯลฯ
-            db.ref('SmartHome/relay_' + channel).set({
-                status: status
-            }).then(() => {
-                console.log("อัปเดตข้อมูลขึ้น Firebase สำเร็จ!");
-            }).catch((error) => {
-                console.error("เกิดข้อผิดพลาดในการส่งข้อมูล: ", error);
-            });
-        }
-    </script>
+    <div class="device-row">
+        <span class="device-name">❄️ ช่องที่ 4 (D6)</span>
+        <label class="switch">
+            <input type="checkbox" id="device4" onchange="toggleDevice(4)">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- ผู้พัฒนาระบบ -->
+    <div class="footer">
+        <div><span>ผู้พัฒนาระบบ</span></div>
+        <div>ครูวิทยากร วรรณา</div>
+        <div>แผนกอิเล็กทรอนิกส์</div>
+        <div>วิทยาลัยสารพัดช่างศรีสะเกษ</div>
+    </div>
+
+</div>
+
+<script>
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "YOUR_PROJECT_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+function toggleDevice(channel){
+
+    let isChecked =
+        document.getElementById("device" + channel).checked;
+
+    let status = isChecked ? "ON" : "OFF";
+
+    console.log(
+        "กำลังส่งคำสั่งช่องที่ "
+        + channel +
+        " -> " +
+        status
+    );
+
+    db.ref('SmartHome/relay_' + channel).set({
+        status: status
+    })
+    .then(() => {
+        console.log("อัปเดตข้อมูลขึ้น Firebase สำเร็จ!");
+    })
+    .catch((error) => {
+        console.error(
+            "เกิดข้อผิดพลาดในการส่งข้อมูล: ",
+            error
+        );
+    });
+}
+
+</script>
 
 </body>
 </html>
+```
