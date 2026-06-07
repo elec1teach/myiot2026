@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Control (Firebase Ready)</title>
+    <style>
+        /* โค้ด CSS ตกแต่งความสวยงาม (เหมือนเดิมทุกประการ) */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        .device-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 0; border-bottom: 1px solid #eee;
+        }
+        .device-row:last-child { border-bottom: none; }
+        .device-name { font-size: 18px; color: #555; font-weight: bold; }
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #4CAF50; }
+        input:checked + .slider:before { transform: translateX(26px); }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>แผงควบคุม ESP8266</h2>
+        <div class="device-row">
+            <span class="device-name">💡 ช่องที่ 1 (D1)</span>
+            <label class="switch"><input type="checkbox" id="device1" onchange="toggleDevice(1)"><span class="slider"></span></label>
+        </div>
+        <div class="device-row">
+            <span class="device-name">🔌 ช่องที่ 2 (D2)</span>
+            <label class="switch"><input type="checkbox" id="device2" onchange="toggleDevice(2)"><span class="slider"></span></label>
+        </div>
+        <div class="device-row">
+            <span class="device-name">📺 ช่องที่ 3 (D5)</span>
+            <label class="switch"><input type="checkbox" id="device3" onchange="toggleDevice(3)"><span class="slider"></span></label>
+        </div>
+        <div class="device-row">
+            <span class="device-name">❄️ ช่องที่ 4 (D6)</span>
+            <label class="switch"><input type="checkbox" id="device4" onchange="toggleDevice(4)"><span class="slider"></span></label>
+        </div>
+    </div>
+
+    <script>
+        // 2. นำค่า Configuration จากโปรเจ็กต์ Firebase ของคุณมาใส่ตรงนี้
+        // (เดี๋ยวเราจะไปเอาค่าเหล่านี้มาจากเว็บ Firebase กันในขั้นตอนต่อไป)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "YOUR_PROJECT_ID"
+        };
+
+        // 3. เริ่มต้นการเชื่อมต่อ Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 4. ฟังก์ชันส่งข้อมูลเมื่อมีการกดปุ่ม
+        function toggleDevice(channel) {
+            let isChecked = document.getElementById("device" + channel).checked;
+            let status = isChecked ? "ON" : "OFF";
+            
+            console.log("กำลังส่งคำสั่งช่องที่ " + channel + " -> " + status);
+
+            // ส่งค่าไปยัง Firebase Realtime Database
+            // จะสร้างโฟลเดอร์ชื่อ 'SmartHome' และมีข้อมูล 'relay_1', 'relay_2', ฯลฯ
+            db.ref('SmartHome/relay_' + channel).set({
+                status: status
+            }).then(() => {
+                console.log("อัปเดตข้อมูลขึ้น Firebase สำเร็จ!");
+            }).catch((error) => {
+                console.error("เกิดข้อผิดพลาดในการส่งข้อมูล: ", error);
+            });
+        }
+    </script>
+
+</body>
+</html>
