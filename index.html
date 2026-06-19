@@ -6,15 +6,67 @@
 <title>Smart Home Control - Futuristic UI</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-    /* สไตล์คงเดิมของคุณ */
+    /* สไตล์คงเดิม */
     *{ margin:0; padding:0; box-sizing:border-box; }
     body{ font-family:'Prompt',sans-serif; background: radial-gradient(circle at top left,#0f172a,#020617 70%); min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; overflow:hidden; color:white; }
     body::before{ content:""; position:absolute; width:500px; height:500px; background:rgba(0,255,255,0.08); filter:blur(100px); top:-150px; left:-100px; }
     body::after{ content:""; position:absolute; width:400px; height:400px; background:rgba(0,140,255,0.08); filter:blur(100px); bottom:-120px; right:-80px; }
     .container{ position:relative; z-index:1; width:100%; max-width:430px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); backdrop-filter:blur(18px); border-radius:25px; padding:30px; box-shadow: 0 0 25px rgba(0,255,255,0.15), 0 0 60px rgba(0,140,255,0.08); }
-    .title{ text-align:center; margin-bottom:30px; }
+    .title{ text-align:center; margin-bottom:25px; }
     .title h1{ font-family:'Orbitron',sans-serif; font-size:28px; color:#00ffff; letter-spacing:2px; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
     .title p{ margin-top:8px; color:#cbd5e1; font-size:14px; }
+
+    /* --- ส่วนที่เพิ่มใหม่: สไตล์สำหรับกล่องแสดงเซ็นเซอร์ --- */
+    .sensor-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        gap: 15px;
+    }
+    .sensor-box {
+        flex: 1;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px;
+        padding: 15px;
+        text-align: center;
+        transition: 0.3s;
+    }
+    .sensor-box:hover {
+        transform: translateY(-2px);
+    }
+    .sensor-box.temp:hover {
+        box-shadow: 0 0 20px rgba(255, 152, 0, 0.2);
+    }
+    .sensor-box.hum:hover {
+        box-shadow: 0 0 20px rgba(0, 191, 255, 0.2);
+    }
+    .sensor-icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+    .sensor-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    /* สีของตัวเลขอุณหภูมิ (ส้มเรืองแสง) */
+    .sensor-box.temp .sensor-value {
+        color: #ff9800;
+        text-shadow: 0 0 10px #ff9800;
+    }
+    /* สีของตัวเลขความชื้น (ฟ้าเรืองแสง) */
+    .sensor-box.hum .sensor-value {
+        color: #00bfff;
+        text-shadow: 0 0 10px #00bfff;
+    }
+    .sensor-label {
+        font-size: 13px;
+        color: #cbd5e1;
+    }
+    /* ------------------------------------------- */
+
     .device-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding:18px 20px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:0.3s; }
     .device-row:hover{ transform:translateY(-2px); box-shadow:0 0 20px rgba(0,255,255,0.15); }
     .device-name{ font-size:17px; font-weight:500; }
@@ -38,6 +90,18 @@
         <p>ESP8266 IoT Control Panel</p>
     </div>
 
+    <div class="sensor-container">
+        <div class="sensor-box temp">
+            <div class="sensor-icon">🌡️</div>
+            <div class="sensor-value" id="tempValue">--°C</div>
+            <div class="sensor-label">อุณหภูมิ</div>
+        </div>
+        <div class="sensor-box hum">
+            <div class="sensor-icon">💧</div>
+            <div class="sensor-value" id="humValue">--%</div>
+            <div class="sensor-label">ความชื้น</div>
+        </div>
+    </div>
     <div class="device-row">
         <span class="device-name">💡 ช่องที่ 1 (D1)</span>
         <label class="switch">
@@ -76,7 +140,6 @@
 </div>
 
 <script>
-  // แก้ไขตรงนี้: เพิ่ม databaseURL ที่ถูกต้องเข้าไปครับ
   const firebaseConfig = {
     apiKey: "AIzaSyBG4YYjWVCOV0BzWFUEAfy87IBq2IAJ_jg",
     authDomain: "myiot2026-c00b6.firebaseapp.com",
@@ -90,6 +153,26 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
+  // --- ส่วนที่เพิ่มใหม่: โค้ดดึงข้อมูลเซ็นเซอร์จาก Firebase มาแสดงผล ---
+  
+  // 1. ดักฟังค่าอุณหภูมิ
+  db.ref('SmartHome/sensor/temperature').on('value', (snapshot) => {
+    let temp = snapshot.val();
+    if(temp !== null) {
+        document.getElementById('tempValue').innerText = temp + "°C";
+    }
+  });
+
+  // 2. ดักฟังค่าความชื้น
+  db.ref('SmartHome/sensor/humidity').on('value', (snapshot) => {
+    let hum = snapshot.val();
+    if(hum !== null) {
+        document.getElementById('humValue').innerText = hum + "%";
+    }
+  });
+  // --------------------------------------------------------
+
+  // ฟังก์ชันควบคุม Relay (ของเดิม)
   function toggleDevice(channel){
     let isChecked = document.getElementById("device" + channel).checked;
     let status = isChecked ? "ON" : "OFF";
