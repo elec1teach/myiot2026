@@ -16,11 +16,11 @@
     .title h1{ font-family:'Orbitron',sans-serif; font-size:28px; color:#00ffff; letter-spacing:2px; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
     .title p{ margin-top:8px; color:#cbd5e1; font-size:14px; }
 
-    /* --- ส่วนที่เพิ่มใหม่: สไตล์สำหรับกล่องแสดงเซ็นเซอร์ --- */
+    /* สไตล์สำหรับกล่องแสดงเซ็นเซอร์ */
     .sensor-container {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         gap: 15px;
     }
     .sensor-box {
@@ -51,12 +51,10 @@
         font-weight: 700;
         margin-bottom: 5px;
     }
-    /* สีของตัวเลขอุณหภูมิ (ส้มเรืองแสง) */
     .sensor-box.temp .sensor-value {
         color: #ff9800;
         text-shadow: 0 0 10px #ff9800;
     }
-    /* สีของตัวเลขความชื้น (ฟ้าเรืองแสง) */
     .sensor-box.hum .sensor-value {
         color: #00bfff;
         text-shadow: 0 0 10px #00bfff;
@@ -65,7 +63,35 @@
         font-size: 13px;
         color: #cbd5e1;
     }
-    /* ------------------------------------------- */
+
+    /* --- ส่วนที่เพิ่มใหม่: สไตล์หลอดไฟแสดงผลปั๊มน้ำ (Pump) --- */
+    .pump-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 15px 20px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+    }
+    .pump-indicator {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 6px 18px;
+        border-radius: 20px;
+        background: #334155;
+        color: #94a3b8;
+        transition: all 0.4s ease;
+    }
+    /* เมื่อปั๊มทำงาน (อุณหภูมิ > 30) ให้เรืองแสงสีเขียวตระการตา */
+    .pump-indicator.active {
+        background: #00ff66;
+        color: #020617;
+        box-shadow: 0 0 15px #00ff66, 0 0 25px #00ff66;
+    }
+    /* ------------------------------------------------ */
 
     .device-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding:18px 20px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:0.3s; }
     .device-row:hover{ transform:translateY(-2px); box-shadow:0 0 20px rgba(0,255,255,0.15); }
@@ -101,6 +127,11 @@
             <div class="sensor-value" id="humValue">--%</div>
             <div class="sensor-label">ความชื้น</div>
         </div>
+    </div>
+
+    <div class="pump-row">
+        <span class="device-name">🌊 ระบบปั๊มน้ำ (Pump)</span>
+        <div class="pump-indicator" id="pumpStatus">OFF</div>
     </div>
     <div class="device-row">
         <span class="device-name">💡 ช่องที่ 1 (D1)</span>
@@ -152,27 +183,35 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-
-  // --- ส่วนที่เพิ่มใหม่: โค้ดดึงข้อมูลเซ็นเซอร์จาก Firebase มาแสดงผล ---
   
-  // 1. ดักฟังค่าอุณหภูมิ
+  // ดักฟังค่าอุณหภูมิ
   db.ref('SmartHome/sensor/temperature').on('value', (snapshot) => {
     let temp = snapshot.val();
     if(temp !== null) {
         document.getElementById('tempValue').innerText = temp + "°C";
+        
+        // --- ส่วนที่เพิ่มใหม่: ตรวจสอบเงื่อนไขเปิด/ปิดหลอดไฟปั๊มน้ำ ---
+        let pumpStatusEl = document.getElementById('pumpStatus');
+        if(parseFloat(temp) > 30) {
+            pumpStatusEl.innerText = "ON";
+            pumpStatusEl.classList.add('active'); // เพิ่มแสงสีเขียวเรืองแสง
+        } else {
+            pumpStatusEl.innerText = "OFF";
+            pumpStatusEl.classList.remove('active'); // เอาแสงออก
+        }
+        // -------------------------------------------------------
     }
   });
 
-  // 2. ดักฟังค่าความชื้น
+  // ดักฟังค่าความชื้น
   db.ref('SmartHome/sensor/humidity').on('value', (snapshot) => {
     let hum = snapshot.val();
     if(hum !== null) {
         document.getElementById('humValue').innerText = hum + "%";
     }
   });
-  // --------------------------------------------------------
 
-  // ฟังก์ชันควบคุม Relay (ของเดิม)
+  // ฟังก์ชันควบคุม Relay
   function toggleDevice(channel){
     let isChecked = document.getElementById("device" + channel).checked;
     let status = isChecked ? "ON" : "OFF";
