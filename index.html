@@ -1,234 +1,76 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Home Control - Futuristic UI</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Prompt:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-    /* สไตล์คงเดิม */
-    *{ margin:0; padding:0; box-sizing:border-box; }
-    body{ font-family:'Prompt',sans-serif; background: radial-gradient(circle at top left,#0f172a,#020617 70%); min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; overflow:hidden; color:white; }
-    body::before{ content:""; position:absolute; width:500px; height:500px; background:rgba(0,255,255,0.08); filter:blur(100px); top:-150px; left:-100px; }
-    body::after{ content:""; position:absolute; width:400px; height:400px; background:rgba(0,140,255,0.08); filter:blur(100px); bottom:-120px; right:-80px; }
-    .container{ position:relative; z-index:1; width:100%; max-width:430px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); backdrop-filter:blur(18px); border-radius:25px; padding:30px; box-shadow: 0 0 25px rgba(0,255,255,0.15), 0 0 60px rgba(0,140,255,0.08); }
-    .title{ text-align:center; margin-bottom:25px; }
-    .title h1{ font-family:'Orbitron',sans-serif; font-size:28px; color:#00ffff; letter-spacing:2px; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
-    .title p{ margin-top:8px; color:#cbd5e1; font-size:14px; }
+#include <SoftwareSerial.h>
 
-    /* สไตล์สำหรับกล่องแสดงเซ็นเซอร์ */
-    .sensor-container {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 20px;
-        gap: 15px;
-    }
-    .sensor-box {
-        flex: 1;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 18px;
-        padding: 15px;
-        text-align: center;
-        transition: 0.3s;
-    }
-    .sensor-box:hover {
-        transform: translateY(-2px);
-    }
-    .sensor-box.temp:hover {
-        box-shadow: 0 0 20px rgba(255, 152, 0, 0.2);
-    }
-    .sensor-box.hum:hover {
-        box-shadow: 0 0 20px rgba(0, 191, 255, 0.2);
-    }
-    .sensor-icon {
-        font-size: 24px;
-        margin-bottom: 5px;
-    }
-    .sensor-value {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 26px;
-        font-weight: 700;
-        margin-bottom: 5px;
-    }
-    .sensor-box.temp .sensor-value {
-        color: #ff9800;
-        text-shadow: 0 0 10px #ff9800;
-    }
-    .sensor-box.hum .sensor-value {
-        color: #00bfff;
-        text-shadow: 0 0 10px #00bfff;
-    }
-    .sensor-label {
-        font-size: 13px;
-        color: #cbd5e1;
-    }
+// กำหนดขาพินสำหรับ HC-SR04
+const int trigPin = 13; // D7
+const int echoPin = 15; // D8
 
-    /* --- ส่วนที่เพิ่มใหม่: สไตล์หลอดไฟแสดงผลปั๊มน้ำ (Pump) --- */
-    .pump-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-        padding: 15px 20px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px dashed rgba(255, 255, 255, 0.15);
-    }
-    .pump-indicator {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 14px;
-        font-weight: 700;
-        padding: 6px 18px;
-        border-radius: 20px;
-        background: #334155;
-        color: #94a3b8;
-        transition: all 0.4s ease;
-    }
-    /* เมื่อปั๊มทำงาน (อุณหภูมิ > 30) ให้เรืองแสงสีเขียวตระการตา */
-    .pump-indicator.active {
-        background: #00ff66;
-        color: #020617;
-        box-shadow: 0 0 15px #00ff66, 0 0 25px #00ff66;
-    }
-    /* ------------------------------------------------ */
+// กำหนดขาพินสำหรับคุยกับ SIM800L (RX, TX)
+SoftwareSerial sim800l(0, 2); // D3 เป็น RX, D4 เป็น TX
 
-    .device-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; padding:18px 20px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); transition:0.3s; }
-    .device-row:hover{ transform:translateY(-2px); box-shadow:0 0 20px rgba(0,255,255,0.15); }
-    .device-name{ font-size:17px; font-weight:500; }
-    .switch{ position:relative; display:inline-block; width:64px; height:34px; }
-    .switch input{ opacity:0; width:0; height:0; }
-    .slider{ position:absolute; cursor:pointer; inset:0; background:#334155; border-radius:34px; transition:0.4s; }
-    .slider:before{ position:absolute; content:""; height:26px; width:26px; left:4px; bottom:4px; background:white; border-radius:50%; transition:0.4s; }
-    input:checked + .slider{ background:#00ffff; box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
-    input:checked + .slider:before{ transform:translateX(30px); }
-    .footer{ margin-top:30px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.1); text-align:center; color:#94a3b8; font-size:13px; line-height:1.7; }
-    .footer span{ color:#00ffff; font-weight:600; }
-</style>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-</head>
-<body>
+// ตัวแปรสำหรับเซ็นเซอร์อัลตร้าโซนิค
+long duration;
+int distance;
+int thresholdDistance = 100; // ระยะตรวจจับ 100 เซนติเมตร
 
-<div class="container">
-    <div class="title">
-        <h1>SMART HOME</h1>
-        <p>ESP8266 IoT Control Panel</p>
-    </div>
+// เบอร์โทรศัพท์ที่ต้องการให้โทรไปแจ้งเตือน (เปลี่ยนเป็นเบอร์ของคุณครู)
+String phoneNumber = "+66891234567"; 
 
-    <div class="sensor-container">
-        <div class="sensor-box temp">
-            <div class="sensor-icon">🌡️</div>
-            <div class="sensor-value" id="tempValue">--°C</div>
-            <div class="sensor-label">อุณหภูมิ</div>
-        </div>
-        <div class="sensor-box hum">
-            <div class="sensor-icon">💧</div>
-            <div class="sensor-value" id="humValue">--%</div>
-            <div class="sensor-label">ความชื้น</div>
-        </div>
-    </div>
+// ตัวแปรป้องกันการโทรซ้ำรัวๆ
+unsigned long lastCallTime = 0;
+const unsigned long callCooldown = 60000; // หน่วงเวลา 60 วินาทีถึงจะโทรซ้ำได้
 
-    <div class="pump-row">
-        <span class="device-name">🌊 ระบบปั๊มน้ำ (Pump)</span>
-        <div class="pump-indicator" id="pumpStatus">OFF</div>
-    </div>
-    <div class="device-row">
-        <span class="device-name">💡 ช่องที่ 1 (D1)</span>
-        <label class="switch">
-            <input type="checkbox" id="device1" onchange="toggleDevice(1)">
-            <span class="slider"></span>
-        </label>
-    </div>
-    <div class="device-row">
-        <span class="device-name">🔌 ช่องที่ 2 (D2)</span>
-        <label class="switch">
-            <input type="checkbox" id="device2" onchange="toggleDevice(2)">
-            <span class="slider"></span>
-        </label>
-    </div>
-    <div class="device-row">
-        <span class="device-name">📺 ช่องที่ 3 (D5)</span>
-        <label class="switch">
-            <input type="checkbox" id="device3" onchange="toggleDevice(3)">
-            <span class="slider"></span>
-        </label>
-    </div>
-    <div class="device-row">
-        <span class="device-name">❄️ ช่องที่ 4 (D6)</span>
-        <label class="switch">
-            <input type="checkbox" id="device4" onchange="toggleDevice(4)">
-            <span class="slider"></span>
-        </label>
-    </div>
-
-    <div class="footer">
-        <div><span>ผู้พัฒนาระบบ</span></div>
-        <div>ครูวิทยากร วรรณา</div>
-        <div>แผนกอิเล็กทรอนิกส์</div>
-        <div>วิทยาลัยสารพัดช่างศรีสะเกษ</div>
-    </div>
-</div>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBG4YYjWVCOV0BzWFUEAfy87IBq2IAJ_jg",
-    authDomain: "myiot2026-c00b6.firebaseapp.com",
-    databaseURL: "https://myiot2026-c00b6-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "myiot2026-c00b6",
-    storageBucket: "myiot2026-c00b6.firebasestorage.app",
-    messagingSenderId: "357940127457",
-    appId: "1:357940127457:web:c81d0c6175e08657c079a0"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+void setup() {
+  Serial.begin(115200);
+  sim800l.begin(9600); // ความเร็วมาตรฐานของ SIM800L
   
-  // ดักฟังค่าอุณหภูมิ
-  db.ref('SmartHome/sensor/temperature').on('value', (snapshot) => {
-    let temp = snapshot.val();
-    if(temp !== null) {
-        document.getElementById('tempValue').innerText = temp + "°C";
-        
-        // --- ส่วนที่เพิ่มใหม่: ตรวจสอบเงื่อนไขเปิด/ปิดหลอดไฟปั๊มน้ำ ---
-        let pumpStatusEl = document.getElementById('pumpStatus');
-        if(parseFloat(temp) > 30) {
-            pumpStatusEl.innerText = "ON";
-            pumpStatusEl.classList.add('active'); // เพิ่มแสงสีเขียวเรืองแสง
-        } else {
-            pumpStatusEl.innerText = "OFF";
-            pumpStatusEl.classList.remove('active'); // เอาแสงออก
-        }
-        // -------------------------------------------------------
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  Serial.println("System Initializing...");
+  delay(5000); // รอให้โมดูล SIM จับสัญญาณเครือข่ายให้เสร็จ
+  Serial.println("Smart Security System Ready!");
+}
+
+void loop() {
+  // 1. กระบวนการยิงคลื่นอัลตร้าโซนิคเพื่อวัดระยะ
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // 2. อ่านเวลาและคำนวณเป็นเซนติเมตร
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+
+  Serial.print("Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // 3. ตรวจสอบผู้บุกรุก และตรวจสอบว่าพ้นระยะหน่วงเวลา(Cooldown)หรือยัง
+  if (distance > 0 && distance < thresholdDistance) {
+    if (millis() - lastCallTime > callCooldown || lastCallTime == 0) {
+      Serial.println("🚨 INTRUDER DETECTED! Calling Owner...");
+      makeCall();
+      lastCallTime = millis(); // บันทึกเวลาที่โทรออกล่าสุด
+    } else {
+      Serial.println("Intruder detected, but call is on cooldown.");
     }
-  });
-
-  // ดักฟังค่าความชื้น
-  db.ref('SmartHome/sensor/humidity').on('value', (snapshot) => {
-    let hum = snapshot.val();
-    if(hum !== null) {
-        document.getElementById('humValue').innerText = hum + "%";
-    }
-  });
-
-  // ฟังก์ชันควบคุม Relay
-  function toggleDevice(channel){
-    let isChecked = document.getElementById("device" + channel).checked;
-    let status = isChecked ? "ON" : "OFF";
-
-    console.log("กำลังส่งคำสั่งช่องที่ " + channel + " -> " + status);
-
-    db.ref('SmartHome/relay_' + channel).set({
-        status: status
-    })
-    .then(() => {
-        console.log("อัปเดตข้อมูลขึ้น Firebase สำเร็จ!");
-    })
-    .catch((error) => {
-        console.error("เกิดข้อผิดพลาดในการส่งข้อมูล: ", error);
-    });
   }
-</script>
 
-</body>
-</html>
+  delay(1000); // หน่วงเวลาอ่านค่ารอบต่อไป 1 วินาที
+}
+
+// ฟังก์ชันสั่ง SIM800L โทรออก
+void makeCall() {
+  sim800l.println("AT"); // เช็คการเชื่อมต่อ
+  delay(1000);
+  
+  sim800l.print("ATD"); // คำสั่งโทรออก (ATD)
+  sim800l.print(phoneNumber);
+  sim800l.println(";"); // ต้องปิดท้ายด้วยเครื่องหมายอัฒภาค (;) สำหรับการโทรเสียง
+  
+  delay(20000); // ปล่อยให้สายดัง 20 วินาที
+  sim800l.println("ATH"); // คำสั่งวางสาย (ATH)
+  Serial.println("Call Ended.");
+}
